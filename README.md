@@ -21,6 +21,8 @@ user's home and in Docker (no sudo, except one optional step that the phase prin
 
 ## Deploy
 
+The step-by-step install by hand, with every value to fill in, is [`RUNBOOK.md`](RUNBOOK.md).
+
 With Claude Code on a PC that has ssh access to the Spark: open this directory and say "deploy the
 pilot kit". It follows `CLAUDE.md`. By hand:
 
