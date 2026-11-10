@@ -19,7 +19,7 @@ start() {
   mkdir -p "$CACHE"/{vllm,flashinfer,triton,b12x}
   docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
   # The model's template accepts only xhigh|medium|low and answers HTTP 400 to "high", which
-  # opencode, pi and the fleet's coding role all send. Map high and max to xhigh; nothing else changes.
+  # opencode, dsh and most OpenAI-compatible clients send. Map high and max to xhigh; nothing else changes.
   python3 - "$MODEL_DIR/chat_template.jinja" "$PILOT_HOME/chat_template.jinja" <<'PY' || fail "chat template patch failed"
 import sys
 src, dst = sys.argv[1], sys.argv[2]
@@ -79,18 +79,29 @@ PY
 }
 
 test_server() {
-  local h=(-H "Authorization: Bearer $(api_key)" -H "Content-Type: application/json") u="http://127.0.0.1:$LLM_PORT/v1"
-  curl -sf -m 10 "${h[@]}" "$u/models" | grep -q "$SERVED_NAME" && ok "/v1/models lists $SERVED_NAME" || fail "/v1/models"
-  python3 - "$u" "$(api_key)" "$SERVED_NAME" <<'PY'
-import json, sys, time, urllib.request
-u, key, name = sys.argv[1:]
+  # The key stays in its file: Python reads it, so it is never on a command line (ps shows those).
+  python3 - "http://127.0.0.1:$LLM_PORT/v1" "$KEY_FILE" "$SERVED_NAME" <<'PY'
+import json, os, sys, time, urllib.request
+u, keyfile, name = sys.argv[1:]
+key = open(keyfile).read().strip() if os.path.exists(keyfile) else ""
+hdr = {"Content-Type": "application/json", **({"Authorization": f"Bearer {key}"} if key else {})}
+def call(path, body=None, timeout=600):
+    r = urllib.request.Request(u + path, json.dumps(body).encode() if body else None, hdr)
+    t = time.time(); d = json.load(urllib.request.urlopen(r, timeout=timeout)); return d, time.time() - t
 def post(body):
-    r = urllib.request.Request(u + "/chat/completions", json.dumps(body).encode(),
-        {"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
-    t = time.time(); d = json.load(urllib.request.urlopen(r, timeout=600)); return d, time.time() - t
+    return call("/chat/completions", body)
+ids = [m["id"] for m in call("/models", timeout=10)[0]["data"]]
+if name not in ids:
+    sys.exit(f"FAIL /v1/models lists {ids}, not {name}")
+print(f"OK   /v1/models lists {name}")
 d, s = post({"model": name, "max_tokens": 600, "chat_template_kwargs": {"enable_thinking": False},
              "messages": [{"role": "user", "content": "Write a haiku about a GPU. Then stop."}]})
-n = d["usage"]["completion_tokens"]; print(f"OK   chat: {n} tokens in {s:.1f} s ({n/s:.1f} tok/s incl. prefill)")
+print(f"OK   chat: {d['choices'][0]['message']['content'].strip()[:80]!r}")
+# Decode speed: a long, predictable reply, so the prefill is a small part of the time.
+d, s = post({"model": name, "max_tokens": 1500, "temperature": 0, "chat_template_kwargs": {"enable_thinking": False},
+             "messages": [{"role": "user", "content": "Count from 1 to 300 in English words, comma separated. Nothing else."}]})
+n = d["usage"]["completion_tokens"]
+print(f"OK   decode: {n} tokens in {s:.1f} s = {n/s:.1f} tok/s (one stream, prefill included)")
 tool = {"type": "function", "function": {"name": "get_tank_level", "description": "Level of a tank in percent",
         "parameters": {"type": "object", "properties": {"tank": {"type": "string"}}, "required": ["tank"]}}}
 d, s = post({"model": name, "max_tokens": 4000, "tools": [tool],

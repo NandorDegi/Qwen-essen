@@ -25,17 +25,18 @@ else
   rm -f "$OC/agents/kb-scribe.md" "$OC/commands/kb.md"
   log "no OBSIDIAN_MCP_URL: kb-scribe and /kb left out"
 fi
-mode="--headless"; [ "${PLAYWRIGHT_HEADED:-0}" = 1 ] && mode="--isolated"
+mode="--headless"; if [ "$PLAYWRIGHT_HEADED" = 1 ]; then mode="--isolated"; fi
 python3 - "$KIT/opencode/opencode.json.tmpl" "$OC/opencode.json" <<PY
 import json, sys
 s = open(sys.argv[1]).read()
-for k, v in {"@SERVED_NAME@": "$SERVED_NAME", "@LLM_PORT@": "$LLM_PORT", "@MAX_MODEL_LEN@": "$MAX_MODEL_LEN",
-             "@HOME@": "$HOME", "@PLAYWRIGHT_MODE@": "$mode"}.items():
+for k, v in {"@SERVED_NAME@": "$SERVED_NAME", "@LLM_PORT@": "$LLM_PORT", "@MAX_MODEL_LEN@": "$MAX_MODEL_LEN", "@MAX_OUTPUT@": "$OPENCODE_MAX_OUTPUT",
+             "@PILOT_LOGS@": "$PILOT_LOGS", "@PLAYWRIGHT_MODE@": "$mode"}.items():
     s = s.replace(k, v)
 s = s.replace("@OBSIDIAN_BLOCK@", '''$obsidian''')
 json.loads(s)  # refuse to install a config that is not valid JSON
 open(sys.argv[2], "w").write(s)
 PY
 touch "$OC/.pilot-kit"
-ok "opencode config in $OC ($(ls "$OC/agents" | wc -l) agents, $(ls "$OC/commands" | wc -l) commands)"
-command -v opencode >/dev/null && opencode --version >/dev/null && ok "opencode $(opencode --version)" || log "WARN opencode not on PATH yet: run phase 40"
+ok "opencode config in $OC ($(find "$OC/agents" -name '*.md' | wc -l) agents, $(find "$OC/commands" -name '*.md' | wc -l) commands)"
+if command -v opencode >/dev/null; then ok "opencode $(opencode --version)"; else log "WARN opencode not on PATH yet: run phase 40"; fi
+if command -v playwright-mcp >/dev/null; then ok "playwright-mcp on PATH"; else log "WARN playwright-mcp not on PATH yet: run phase 40"; fi

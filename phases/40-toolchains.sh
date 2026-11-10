@@ -19,7 +19,8 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
 done
 source "$PILOT_HOME/env.sh"
 
-fetch() { retry 8 curl -fsSL --retry 3 -C - -o "$2" "$1"; }
+# fetch URL FILE: resumable; the file appears only when the download is complete.
+fetch() { [ -s "$2" ] && return 0; retry 8 curl -fsSL --retry 3 -C - -o "$2.part" "$1" && mv "$2.part" "$2"; }
 
 # Node
 if ! node --version 2>/dev/null | grep -q "$NODE_VERSION"; then
@@ -34,14 +35,15 @@ if ! go version 2>/dev/null | grep -q "$GO_VERSION "; then
   rm -rf "$OPT/go"; tar -xzf "/tmp/$f" -C "$OPT"
 fi
 ok "$(go version)"
-command -v gopls >/dev/null || retry 5 go install golang.org/x/tools/gopls@latest
+gopls version 2>/dev/null | grep -q "gopls $GOPLS_VERSION" || retry 5 go install "golang.org/x/tools/gopls@$GOPLS_VERSION"
 ok "gopls $(gopls version | head -1)"
 
 # Rust
 if ! command -v rustup >/dev/null; then
   fetch https://sh.rustup.rs /tmp/rustup.sh; sh /tmp/rustup.sh -y --no-modify-path --profile minimal
 fi
-retry 5 rustup toolchain install stable --component rust-analyzer,clippy,rustfmt >/dev/null
+retry 5 rustup toolchain install "$RUST_TOOLCHAIN" --component rust-analyzer,clippy,rustfmt >/dev/null
+rustup default "$RUST_TOOLCHAIN" >/dev/null
 ok "$(rustc --version); rust-analyzer $(rust-analyzer --version | cut -d' ' -f2)"
 
 # Python
@@ -54,9 +56,14 @@ retry 5 npm install -g --no-fund --no-audit "opencode-ai@$OPENCODE_VERSION" \
   "@playwright/mcp@$PLAYWRIGHT_MCP_VERSION" >/dev/null
 ok "opencode $(opencode --version), tsls $(typescript-language-server --version), pyright $(pyright --version | cut -d' ' -f2)"
 
-# Chromium for the Playwright MCP server (the browser revision its playwright pins).
-pw="$(dirname "$(readlink -f "$(command -v mcp-server-playwright)")")"
-retry 5 node "$pw/../playwright-core/cli.js" install chromium >/dev/null 2>&1 || retry 5 npx -y playwright install chromium
+# Chromium for the Playwright MCP server: the browser revision that ITS playwright-core pins. A
+# different playwright (npx playwright) installs another revision, and the MCP server cannot start.
+command -v playwright-mcp >/dev/null || fail "playwright-mcp not on PATH after the npm install"
+pwcore="$(npm root -g)/@playwright/mcp/node_modules/playwright-core/cli.js"
+[ -f "$pwcore" ] || pwcore="$(npm root -g)/playwright-core/cli.js"
+[ -f "$pwcore" ] || fail "playwright-core of @playwright/mcp not found"
+retry 5 node "$pwcore" install chromium >/dev/null || fail "chromium download failed; run again"
 missing=$(find "$HOME/.cache/ms-playwright" -name chrome -type f -path '*chrome-linux*' -exec ldd {} \; 2>/dev/null | grep 'not found' | sort -u || true)
-[ -z "$missing" ] && ok "chromium libraries complete" || log "WARN chromium needs system libraries (one sudo step): sudo npx playwright install-deps chromium -- missing: $missing"
+if [ -z "$missing" ]; then ok "chromium libraries complete"
+else log "WARN chromium needs system libraries (one sudo step): sudo $(command -v node) $pwcore install-deps chromium -- missing: $missing"; fi
 ok "toolchains done; open a new shell or: source ~/.config/pilot/env.sh"
