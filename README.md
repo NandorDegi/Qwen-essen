@@ -101,9 +101,12 @@ mdn). There is no vendor account and no key.
 
 A public search engine can refuse a metasearch server (CAPTCHA, HTTP 429). SearXNG suspends an
 engine that refuses and tries it again later. The phase prints a table of the engines that
-answered three test queries, and a `WARN` when fewer than three general engines answer. Measured
-from one site (2026-11-10): bing, mojeek, yahoo and google cse answered; duckduckgo, brave,
-google, qwant and startpage refused. Run `phases/45-search.sh test` again to see the current table.
+answered three test queries, and a `WARN` when fewer than three general engines answer. The set
+changes from run to run. Measured from one site on 2026-11-10, three runs in 20 minutes: mojeek,
+yahoo and google cse answered every time; bing, duckduckgo and brave answered in some runs;
+google, qwant and startpage refused every time. Code and package engines (github, stackoverflow,
+mdn, docker hub, arxiv, crates.io, pkg.go.dev) answered. Run `phases/45-search.sh test` to see
+the current table.
 
 The researcher (and the lead) search with `searxng_web_search`, then read the result pages with
 `webfetch` (opencode), `web_fetch` (dsh), `web_url_read` (MCP), or the Playwright browser for pages
