@@ -1,0 +1,62 @@
+# Home-level dsh patch for the pilot (~/.dsh/cordis.patch.yml), applied to every profile (web and
+# headless). Written by phases/55-dsh.sh from dsh/cordis.patch.yml.tmpl; edit the template and rerun.
+# The model key is not here: dsh reads PILOT_LLM_KEY from its launch environment, which
+# ~/.config/pilot/env.sh fills from ~/.config/pilot/api_key.
+
+- id: llm-pi-ai
+  config:
+    providers:
+      pilot:
+        displayName: DGX Spark (local)
+        api: openai-completions
+        baseURL: http://127.0.0.1:@LLM_PORT@/v1
+        apiKeyEnv: PILOT_LLM_KEY
+        streamIdleTimeoutMs: 900000
+        retryPolicy:
+          mode: normal
+          maxRetries: 8
+          retryableCodes: [EMPTY_RESPONSE, RATE_LIMIT, SERVER, TIMEOUT, TRANSPORT]
+          backoff: {initialDelayMs: 2000, maxDelayMs: 60000, jitterRatio: 0.1}
+        models:
+          - id: @SERVED_NAME@
+            name: Qwen3.8-Flash-Next (FP4-Local, on this Spark)
+            contextWindow: @MAX_MODEL_LEN@
+            maxTokens: @MAX_OUTPUT@
+            input: [text, image]
+            # The chat template knows low, medium and xhigh (phase 30 maps high to xhigh as well).
+            reasoningEfforts: {low: low, medium: medium, high: xhigh}
+            compat:
+              maxTokensField: max_tokens
+              supportsDeveloperRole: false
+              supportsUsageInStreaming: true
+
+- id: agent-default-model
+  config:
+    provider: pilot
+    model: @SERVED_NAME@
+    reasoningEffort: medium
+
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    includeRuntimeContext: true
+    personaPrefix: >-
+      You are a coding agent on an NVIDIA DGX Spark, powered by the {{model}} model, which runs on
+      this machine. Read and follow AGENTS.md before your first tool call.
+
+# One level of subagents; the server runs @MAX_SEQS@ sequences at a time, so at most @MAX_SEQS@ children.
+- id: subagent
+  config:
+    maxDepth: 1
+    maxActiveSubagents: @MAX_SEQS@
+
+- insert:
+    - id: mcp-playwright
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: playwright
+        failOnStartupError: false
+        transport: stdio
+        command: playwright-mcp
+        args: [--browser, chromium, @PLAYWRIGHT_MODE@, --output-dir, @PILOT_LOGS@/playwright]
+@SEARCH_ROW@

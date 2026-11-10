@@ -1,0 +1,11 @@
+{
+  "name": "dsh-pilot-secrets",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Secret hygiene for dsh on the pilot Spark: blocks a tool call that names a secret file or prints the environment, and redacts the model key and secret shapes in tool results.",
+  "type": "module",
+  "main": "index.js",
+  "files": ["index.js", "cordis.patch.yml"],
+  "exports": { ".": "./index.js", "./package.json": "./package.json" },
+  "dsh": { "manifestVersion": 1, "bundle": { "patch": "./cordis.patch.yml" } }
+}

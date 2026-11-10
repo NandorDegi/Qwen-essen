@@ -1,0 +1,4 @@
+# dsh-pilot-secrets bundle layer: one row, loaded in every profile that lists the bundle.
+- insert:
+    - id: dsh-pilot-secrets
+      name: dsh-pilot-secrets

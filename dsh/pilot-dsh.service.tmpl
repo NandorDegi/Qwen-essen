@@ -1,0 +1,20 @@
+# dsh web UI for the pilot. Installed by phases/55-dsh.sh into ~/.config/systemd/user/.
+# env.sh puts the kit's Node and tools on PATH and PILOT_LLM_KEY (from ~/.config/pilot/api_key)
+# into dsh's environment; dsh removes it from the environment of every tool it runs.
+[Unit]
+Description=dsh web UI (pilot kit) on @HOST@:@PORT@
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/demo
+ExecStart=/bin/bash -c '. "$$HOME/.config/pilot/env.sh" && export DSH_HOME="$$HOME/.dsh" DSH_AGENTS_HOME="$$HOME/.agents" && exec dsh web --no-open --host @HOST@ --port @PORT@'
+# The log holds the login URL with its token: only this user can read it.
+UMask=0077
+StandardOutput=append:@LOG@
+StandardError=append:@LOG@
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
