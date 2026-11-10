@@ -1,0 +1,49 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "spark/@SERVED_NAME@",
+  "small_model": "spark/@SERVED_NAME@",
+  "default_agent": "lead",
+  "autoupdate": false,
+  "share": "disabled",
+  "instructions": ["~/.config/opencode/AGENTS.md"],
+  "provider": {
+    "spark": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "DGX Spark (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:@LLM_PORT@/v1",
+        "apiKey": "{env:PILOT_LLM_KEY}",
+        "timeout": 3600000
+      },
+      "models": {
+        "@SERVED_NAME@": {
+          "name": "Qwen3.8-Flash-Next (FP4-Local, on this Spark)",
+          "limit": { "context": @MAX_MODEL_LEN@, "output": 65536 },
+          "tool_call": true,
+          "reasoning": true,
+          "attachment": true,
+          "modalities": { "input": ["text", "image"], "output": ["text"] },
+          "interleaved": { "field": "reasoning_content" }
+        }
+      }
+    }
+  },
+  "permission": {
+    "edit": "allow",
+    "webfetch": "allow",
+    "external_directory": "allow",
+    "bash": { "*": "allow", "sudo *": "ask", "git push*": "ask", "rm -rf /*": "deny", "docker rm*": "ask" }
+  },
+  "lsp": true,
+  "mcp": {
+    "playwright": {
+      "type": "local",
+      "command": ["mcp-server-playwright", "--browser", "chromium", "@PLAYWRIGHT_MODE@", "--output-dir", "@HOME@/pilot-logs/playwright"],
+      "enabled": true
+    }@OBSIDIAN_BLOCK@
+  },
+  "tools": {
+    "playwright_*": false,
+    "obsidian_*": false
+  }
+}
