@@ -36,9 +36,20 @@ to use z-score detection instead of a trained model`
 - `kb-scribe` searches the vault first, writes in the right layer with the house writing
   standard, adds a decision record and a log entry. Open the notes in Obsidian live.
 
-## 6. "It is all local" — 1 min
+## 6. Research with citations (self-hosted search) — 3-5 min
+"Ask `researcher`: which vLLM flags control speculative decoding with MTP, and since which
+version? Cite the pages." It searches through the Spark's own SearXNG, opens the release notes and
+docs (in the browser when a page needs JavaScript) and answers with URLs. Point out that no search
+vendor account or key is involved.
+
+## 7. The same team in dsh (optional, phase 55) — 5 min
+Open the dsh web UI (`ssh -L 3080:127.0.0.1:3080 <spark>`, then http://127.0.0.1:3080). The default
+preset is `lead`; run the `polyglot` skill, and open the subagent views. Same model, same roles,
+another harness.
+
+## 8. "It is all local" — 1 min
 During any long step, unplug the network (or `nmcli networking off`). The agents keep working.
-Only `researcher` web lookups stop.
+Only web search and web lookups stop.
 
 ## If something goes wrong
 - A step stalls for minutes: press Esc, then "continue" — the lead resumes from its todo list.

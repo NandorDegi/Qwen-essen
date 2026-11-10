@@ -1,0 +1,16 @@
+# Site configuration and secrets: never commit them.
+config.env
+config.local.sh
+*.key
+*.token
+*_key
+*_token
+.env
+*.env
+!config.env.example
+api_key
+# Logs and run output
+pilot-logs/
+*.log
+*.jsonl
+__pycache__/

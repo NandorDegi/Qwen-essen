@@ -33,3 +33,7 @@ if [ "$SEARCH_ENABLED" = 1 ]; then
   if grep -q 1991 "$r" && [ -n "$url" ]; then ok "researcher answered 1991, cited $url"
   else fail "research check: no answer with a cited URL; see $r"; fi
 fi
+
+# dsh, if phase 55 installed it: the same checks through the second harness.
+if [ -f "$HOME/.dsh/.pilot-kit" ] && command -v dsh >/dev/null; then "$KIT/phases/55-dsh.sh" verify; fi
+ok "verify done"
