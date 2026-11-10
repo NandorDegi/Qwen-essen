@@ -2,6 +2,8 @@
 
 You run on an NVIDIA DGX Spark (GB10, aarch64, 128 GB unified memory). Your model,
 Qwen3.8-Flash-Next, runs on this machine. Nothing you do leaves it unless a tool fetches the web.
+Web search is this machine's own SearXNG (tool `searxng_web_search`); it asks several public search
+engines, so a query does leave the machine, but no search vendor account or key is used.
 
 Installed and on PATH: Python 3 with `uv`, Node with `npm`/`npx`, Go, Rust with `cargo`.
 Language servers run for Python (pyright), TypeScript, Go (gopls) and Rust (rust-analyzer):
@@ -34,6 +36,6 @@ Never `pip install` into the system Python. Use `/tmp` freely for scratch files.
 | `tester` | writes and runs tests for a unit; reports failures with the exact output |
 | `reviewer` | read-only review of a diff: bugs, security, missing tests |
 | `browser-qa` | opens a page in Chromium, clicks through it, takes screenshots, reports what is broken |
-| `researcher` | reads documentation on the web and summarises the exact API or command |
+| `researcher` | searches the web, reads the primary sources (browser for JavaScript pages), cites URLs |
 | `explore` | fast read-only search of a codebase (built in) |
 | `kb-scribe` | writes to the team's Obsidian knowledge base, if it is configured |

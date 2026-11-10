@@ -1,0 +1,41 @@
+# SearXNG settings for the pilot: stock defaults (use_default_settings) with a broad engine set
+# switched on. Phase 45 installs it as ~/.config/pilot/searxng/settings.yml (mode 600). The secret key
+# comes from SEARXNG_SECRET (~/.config/pilot/searxng-secret.env, made on the Spark).
+use_default_settings: true
+
+general:
+  instance_name: pilot search
+  enable_metrics: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  formats: [html, json]
+
+server:
+  secret_key: set-by-SEARXNG_SECRET
+  limiter: false
+  image_proxy: false
+  public_instance: false
+
+# Engines that the stock settings ship off (disabled) or not loaded (inactive). SearXNG suspends an
+# engine that refuses (CAPTCHA, HTTP 429, 403) and tries it again later; phase 45 reports which answer.
+engines:
+  # general web
+  - {name: bing, disabled: false}
+  - {name: duckduckgo, disabled: false}
+  - {name: mojeek, disabled: false, inactive: false}
+  - {name: startpage, disabled: false, inactive: false}
+  - {name: qwant, disabled: false}
+  - {name: yahoo, disabled: false}
+  - {name: brave, disabled: false}
+  - {name: google, disabled: false}
+  - {name: wikipedia, disabled: false}
+  # code and packages
+  - {name: github, disabled: false}
+  - {name: stackoverflow, disabled: false}
+  - {name: arxiv, disabled: false}
+  - {name: pypi, disabled: false}
+  - {name: npm, disabled: false}
+  - {name: docker hub, disabled: false}
+  - {name: mdn, disabled: false}
